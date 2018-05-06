@@ -10,6 +10,7 @@ import java.nio.charset.Charset;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Random;
 
 public class StopAndWait {
 
@@ -56,6 +57,10 @@ public class StopAndWait {
             splittedServerFirstAckData = splittedServerFirstAckData[0].split("&");
 //            for(int i = 0;i < splittedServerFirstAckData.length;i++){
 //                System.out.println(splittedServerFirstAckData[i]);
+//            }
+//            double random = 0 + Math.random() * (1 - 0);
+//            if(random < 0.5){
+//                Packet packet = Utils.corruptPacket(serverFirstAckData);
 //            }
             Packet packet = assignToPacket(splittedServerFirstAckData,0);
             System.out.println(packet.getChecksum());
@@ -143,6 +148,7 @@ public class StopAndWait {
             return new Packet(checksum, seq_no, is_last_packet,is_ack);
         }else {
             String data = sentences[sentences.length-1].replace("$","");
+//            String decryptedData = Utils.decrypt(data,"g");
             return new Packet(checksum, seq_no, is_last_packet,is_ack,data);
         }
     }

@@ -8,13 +8,13 @@ public class Main {
         }
         switch (args[0]) {
             case "-st":
-                StopAndWait method1 = new StopAndWait("E:\\ClientApp\\client.in");
+                StopAndWait method1 = new StopAndWait("client.in");
                 break;
             case "-sr":
-                SelectiveRepeat method2 = new SelectiveRepeat("E:\\ClientApp\\client.in");
+                SelectiveRepeat method2 = new SelectiveRepeat("client.in");
                 break;
             case "-go":
-                GoBackN method3 = new GoBackN("E:\\ClientApp\\client.in");
+                GoBackN method3 = new GoBackN("client.in");
                 break;
             default:
 

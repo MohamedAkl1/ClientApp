@@ -1,7 +1,11 @@
-import java.io.*;
-import java.net.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -13,7 +17,7 @@ public class GoBackN implements Runnable{
 
     private static String[] inputFile = new String[5];
 
-    private static final int BYTE_SIZE = 30;
+    private static final int BYTE_SIZE = 200;
     private static int SEQ_NO;
     private static final int PACKETS_NO = 65536;
     private static int WINDOW_SIZE;
@@ -32,10 +36,6 @@ public class GoBackN implements Runnable{
     GoBackN(String filename) throws IOException {
         this.filename = filename;
         reader = new BufferedReader(new FileReader(filename));
-
-        for(int i = 0;i < 65536;i++){
-            index[i] = i%SEQ_NO;
-        }
         int i = 0;
         String text;
         while ((text = reader.readLine()) != null){
@@ -51,6 +51,9 @@ public class GoBackN implements Runnable{
         SEQ_NO = WINDOW_SIZE;
         /*  a packet consists of : [checksum,seq_no,is_last_packet, is_ack]*/
         String s = "2&0&0&0&$" + fileName;
+        for(int j = 0;j < 65536;j++){
+            index[j] = j%SEQ_NO;
+        }
         DatagramPacket initialRequest = new DatagramPacket(s.getBytes(), s.length(), address, serverPort);
 //        socket.setSoTimeout(1000);
         socket.send(initialRequest);
@@ -63,7 +66,10 @@ public class GoBackN implements Runnable{
             System.out.println("b3d el recieve");
             String serverFirstAckData = new String(serverFirstAck.getData());
             String[] splittedServerFirstAckData = serverFirstAckData.split("&&");
-            splittedServerFirstAckData = splittedServerFirstAckData[0].split("&");
+            splittedServerFirstAckData = splittedServerFirstAckData[0].split("&");//            double random = 0 + Math.random() * (1 - 0);
+//            if(random < 0.5){
+//                Packet packet = Utils.corruptPacket(serverFirstAckData);
+//            }
             Packet packet = StopAndWait.assignToPacket(splittedServerFirstAckData, 0);
             System.out.println(packet.getChecksum());
             if (packet.isIs_ack()) {
@@ -126,11 +132,7 @@ public class GoBackN implements Runnable{
             }
             if (dataPacket.getIsLastPacket() == 1) {
                 System.out.println("file well received, closing connection...");
-                try {
-                    Utils.writeToFile(new ArrayList<>(Arrays.asList(recievedPackets)));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+//                    Utils.writeToFile(new ArrayList<>(Arrays.asList(recievedPackets)));
                 socket.close();
                 System.exit(1);
             }

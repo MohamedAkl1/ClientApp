@@ -1,13 +1,15 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -19,7 +21,7 @@ public class SelectiveRepeat implements Runnable{
 
     private static String[] inputFile = new String[5];
 
-    private static final int BYTE_SIZE = 50;
+    private static final int BYTE_SIZE = 200;
     private static int WINDOW_SIZE;
     private static final int SEQ_NO = 9;
     private static int baseIndex = 0;
@@ -30,7 +32,7 @@ public class SelectiveRepeat implements Runnable{
     private static InetAddress address;
     private DatagramPacket datagramPacket;
     private static Lock lock = new ReentrantLock();
-    ArrayList<Thread>threads = new ArrayList<>();
+    static int serverPort;
 
     private SelectiveRepeat(DatagramPacket packet){
         datagramPacket = packet;
@@ -50,7 +52,7 @@ public class SelectiveRepeat implements Runnable{
         }
 
         address = InetAddress.getByName(inputFile[0]);
-        int serverPort = Integer.parseInt(inputFile[1]);
+        serverPort = Integer.parseInt(inputFile[1]);
         socket = new DatagramSocket(Integer.parseInt(inputFile[2]));
         String fileName = inputFile[3];
         WINDOW_SIZE = Integer.parseInt(inputFile[4]);
@@ -69,6 +71,10 @@ public class SelectiveRepeat implements Runnable{
             String serverFirstAckData = new String(serverFirstAck.getData());
             String[] splittedServerFirstAckData = serverFirstAckData.split("&&");
             splittedServerFirstAckData = splittedServerFirstAckData[0].split("&");
+            //            double random = 0 + Math.random() * (1 - 0);
+//            if(random < 0.5){
+//                Packet packet = Utils.corruptPacket(serverFirstAckData);
+//            }
             Packet packet = StopAndWait.assignToPacket(splittedServerFirstAckData, 0);
             System.out.println(packet.getChecksum());
             if (packet.isIs_ack()) {
@@ -100,13 +106,12 @@ public class SelectiveRepeat implements Runnable{
         int computedChecksum = StopAndWait.computeChecksum(dataPacketAck);
         String formatted = String.format("%03d", computedChecksum);
         String sendAck = formatted + dataPacketAck;
-        DatagramPacket sendDataPacketAck = new DatagramPacket(sendAck.getBytes(), sendAck.length(), address, 12345);
+        DatagramPacket sendDataPacketAck = new DatagramPacket(sendAck.getBytes(), sendAck.length(), address,serverPort);
         socket.send(sendDataPacketAck);
     }
 
     @Override
     public void run() {
-
         String packetOfData = new String(datagramPacket.getData());
         String[] recievedPacket = packetOfData.split("&");
         Packet dataPacket = StopAndWait.assignToPacket(recievedPacket, 1);
@@ -148,11 +153,7 @@ public class SelectiveRepeat implements Runnable{
                 if (dataPacket.getIsLastPacket() == 1) {
                     socket.close();
                     System.out.println("file well received, closing connection...");
-                    try {
-                        Utils.writeToFile(new ArrayList<>(Arrays.asList(recievedPackets)));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    //                        Utils.writeToFile(new ArrayList<>(Arrays.asList(recievedPackets)));
                     System.exit(1);
                 }
                 lock.unlock();
